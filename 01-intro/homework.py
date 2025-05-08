@@ -1,48 +1,72 @@
 import pandas as pd
+import numpy as np
 from sklearn.feature_extraction import DictVectorizer
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
 
 
+# Q1. Downloading the data
 df = pd.read_parquet(
     "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2023-01.parquet"
 )
-# df = pd.read_parquet("https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2023-02.parquet")
-
-# Q1. Downloading the data
-# Read the data for January. How many columns are there?
 print("Q1. Downloading the data")
-print(df.shape)
+print(f"Number of columns: {df.shape[1]}")
 
 
 # Q2. Computing duration
-# What's the standard deviation of the trips duration in January?
-df["duration"] = df.tpep_dropoff_datetime - df.tpep_pickup_datetime
-print("Q2. Computing duration")
-print(df["duration"].std())
+df["duration"] = (
+    df.tpep_dropoff_datetime - df.tpep_pickup_datetime
+).dt.total_seconds() / 60
+print("\nQ2. Computing duration")
+print(f"Standard deviation of duration: {df['duration'].std():.2f}")
 
 
 # Q3. Dropping outliers
-# Next, we need to check the distribution of the duration variable. There are some outliers. Let's remove them and keep only the records where the duration was between 1 and 60 minutes (inclusive).
-# What fraction of the records left after you dropped the outliers?
-df_drop = df[
-    (df["duration"] >= pd.Timedelta(minutes=1))
-    & (df["duration"] <= pd.Timedelta(minutes=60))
-]
-print("Q3. Dropping outliers")
-print(f"Fraction of records remaining: {df_drop.shape[0] / df.shape[0]:.2%}")
+df_filtered = df[(df["duration"] >= 1) & (df["duration"] <= 60)]
+fraction_remaining = df_filtered.shape[0] / df.shape[0]
+print("\nQ3. Dropping outliers")
+print(f"Fraction of records remaining: {fraction_remaining:.2%}")  # 98%
+
 
 # Q4. One-hot encoding
-
-print("Q4. One-hot encoding")
-# Convert the relevant columns to strings and create a list of dictionaries
-data = df_drop[["PULocationID", "DOLocationID"]].astype(str).to_dict(orient="records")
-
-# Initialize the DictVectorizer
 dv = DictVectorizer()
+X_train = dv.fit_transform(
+    df_filtered[["PULocationID", "DOLocationID"]].astype(str).to_dict(orient="records")
+)
+y_train = df_filtered["duration"].values
+print("\nQ4. One-hot encoding")
+print(
+    f"Dimensionality (number of columns) after one-hot encoding: {X_train.shape[1]}"
+)  # 515
 
-# Fit and transform the data to a one-hot encoded feature matrix
-feature_matrix = dv.fit_transform(data)
 
-# Get the dimensionality (number of columns)
-num_columns = feature_matrix.shape[1]
+# Q5. Training a model
+model = LinearRegression()
+model.fit(X_train, y_train)
 
-print(f"Dimensionality (number of columns) after one-hot encoding: {num_columns}")
+y_pred_train = model.predict(X_train)
+rmse_train = np.sqrt(mean_squared_error(y_train, y_pred_train))
+print("\nQ5. Training a model")
+print(f"RMSE on train: {rmse_train:.2f}")  # 7.64
+
+
+# Q6. Evaluating the model
+df_val = pd.read_parquet(
+    "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2023-02.parquet"
+)
+df_val["duration"] = (
+    df_val.tpep_dropoff_datetime - df_val.tpep_pickup_datetime
+).dt.total_seconds() / 60
+df_val_filtered = df_val[(df_val["duration"] >= 1) & (df_val["duration"] <= 60)]
+
+X_val = dv.transform(
+    df_val_filtered[["PULocationID", "DOLocationID"]]
+    .astype(str)
+    .to_dict(orient="records")
+)
+y_val = df_val_filtered["duration"].values
+
+y_pred_val = model.predict(X_val)
+rmse_val = np.sqrt(mean_squared_error(y_val, y_pred_val))
+print("\nQ6. Evaluating the model")
+print(f"RMSE on validation: {rmse_val:.2f}")  # 11.81
