@@ -1,52 +1,56 @@
 import mlflow
 
-import pandas as pd
+print("Q1. Install MLflow")
 
-from sklearn.feature_extraction import DictVectorizer
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import Lasso
-from sklearn.linear_model import Ridge
-
-from sklearn.metrics import mean_squared_error
-
-# mlflow ui --backend-store-uri sqlite:///mlflow.db
+print(f"What's the version that you have? {mlflow.__version__}")
 
 
-mlflow.set_tracking_uri("sqlite:///mlflow.db")
-print(f"tracking URI: '{mlflow.get_tracking_uri()}'")
+print("Q2. Download and preprocess the data")
+import subprocess
+import os
 
 
-mlflow.set_experiment("homework")
-print(f"experiment name: '{mlflow.get_experiment_by_name('homework')}'")
+# python preprocess_data.py --raw_data_path <TAXI_DATA_FOLDER> --dest_path ./output
+# How many files were saved to OUTPUT_FOLDER?
+# Download dataset from
 
+# 執行 bash 指令
+cmd = "python preprocess_data.py --raw_data_path https://d37ci6vzurychx.cloudfront.net/trip-data/ --dest_path ./output"
+result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
 
-def read_dataframe(filename):
-    df = pd.read_parquet(filename)
+# 印出執行結果（標準輸出）
+print(result.stdout)
 
-    df.lpep_dropoff_datetime = pd.to_datetime(df.lpep_dropoff_datetime)
-    df.lpep_pickup_datetime = pd.to_datetime(df.lpep_pickup_datetime)
+# 讀取 output 資料夾內檔案數量
 
-    df["duration"] = df.lpep_dropoff_datetime - df.lpep_pickup_datetime
-    df.duration = df.duration.apply(lambda td: td.total_seconds() / 60)
-
-    df = df[(df.duration >= 1) & (df.duration <= 60)]
-
-    categorical = ["PULocationID", "DOLocationID"]
-    df[categorical] = df[categorical].astype(str)
-
-    return df
-
-
-df_train = read_dataframe(
-    "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2023-01.parquet"
+output_folder = "./output"
+if os.path.exists(output_folder):
+    print(f"OUTPUT_FOLDER: {output_folder}")
+else:
+    os.makedirs(output_folder, exist_ok=True)
+file_count = len(
+    [
+        f
+        for f in os.listdir(output_folder)
+        if os.path.isfile(os.path.join(output_folder, f))
+    ]
 )
-df_val = read_dataframe(
-    "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2023-02.parquet"
-)
-
-print(f"train rows: {df_train.shape[0]}")
-print(f"val rows: {df_val.shape[0]}")
+print(f"How many files were saved to OUTPUT_FOLDER? {file_count}")
 
 
-df_train["PU_DO"] = df_train["PULocationID"] + "_" + df_train["DOLocationID"]
-df_val["PU_DO"] = df_val["PULocationID"] + "_" + df_val["DOLocationID"]
+print("Q3. Train a model with autolog")
+cmd = "python train.py --data_path ./output"
+
+result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+
+
+print("Q4. Launch the tracking server locally")
+cmd = "mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./artifacts --host 127.0.0.1 --port 5000"
+
+print("default-artifact-root")
+
+print("Q5. Tune model hyperparameters")
+cmd = "python hpo.py --data_path ./output --num_trials 15"
+
+print("Q6. Promote the best model to the model registry")
+cmd = "python register_model.py"
