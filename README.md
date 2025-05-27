@@ -6,6 +6,10 @@
 ```
 wget https://repo.anaconda.com/archive/Anaconda3-2022.05-Linux-x86_64.sh
 bash Anaconda3-2022.05-Linux-x86_64.sh
+
+export PATH=~/anaconda3/bin:$PATH
+source ~/.bashrc
+conda create --name mlops python=3.11
 ```
 ```
 curl -O https://repo.anaconda.com/archive/Anaconda3-2022.05-MacOSX-x86_64.sh
