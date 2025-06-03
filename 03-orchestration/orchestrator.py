@@ -1,145 +1,99 @@
 import pandas as pd
 import pickle
 from sklearn.feature_extraction import DictVectorizer
-from sklearn.metrics import root_mean_squared_error
+from sklearn.linear_model import LinearRegression
 import mlflow
-import xgboost as xgb
-from pathlib import Path
+import numpy as np
+import os
 
-train_url = (
-    "https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2021-01.parquet"
-)
-val_url = (
-    "https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2021-02.parquet"
+yellow_taxi_url = (
+    "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2023-03.parquet"
 )
 
 
-def download_data(year, month, max_retries=3):
-    # ingestion
-    attempt = 0
-    while attempt < max_retries:
-        filename = f"green_tripdata_{year}-{month:02d}.parquet"
-        url = f"https://d37ci6vzurychx.cloudfront.net/trip-data/{filename}"
-        try:
-            df = pd.read_parquet(url)
-            if not df.empty:
-                return df
-            else:
-                print(
-                    f"Data for {year}-{month:02d} is empty, retrying ({attempt + 1}/{max_retries})..."
-                )
-        except Exception as e:
-            print(f"Failed to download data for {year}-{month:02d}: {e}")
-
-        attempt += 1
-
-    # 如果失敗或資料仍為空
-    print(
-        f"Failed to get valid data for {year}-{month:02d} after {max_retries} attempts."
-    )
-    return pd.DataFrame()
+def read_raw_dataframe(filename):
+    # 讀取原始資料，未過濾 duration
+    df = pd.read_parquet(filename)
+    return df
 
 
-def transform_data(df):
-    # filtering and removing outliers
-    df["duration"] = df.lpep_dropoff_datetime - df.lpep_pickup_datetime
-    df.duration = df.duration.apply(lambda td: td.total_seconds() / 60)
-
-    df = df[(df.duration >= 1) & (df.duration <= 60)]
+def read_dataframe_filtered(filename):
+    # 讀取資料並過濾 duration 1~60 分鐘
+    df = pd.read_parquet(filename)
+    df["duration"] = (
+        df.tpep_dropoff_datetime - df.tpep_pickup_datetime
+    ).dt.total_seconds() / 60
+    df = df[(df["duration"] >= 1) & (df["duration"] <= 60)]
 
     categorical = ["PULocationID", "DOLocationID"]
     df[categorical] = df[categorical].astype(str)
-
-    df["PU_DO"] = df["PULocationID"] + "_" + df["DOLocationID"]
-
     return df
 
 
-def prepare_data(df):
-    return df
+def prepare_features(df, dv=None, fit_dv=True):
+    features = df[["PULocationID", "DOLocationID"]]
+    dicts = features.to_dict(orient="records")
 
-
-def fearure_engineering(df_train, df_val=None):
-    categorical = ["PU_DO"]  #'PULocationID', 'DOLocationID']
-    numerical = ["trip_distance"]
-
-    dv = DictVectorizer()
-
-    train_dicts = df_train[categorical + numerical].to_dict(orient="records")
-    X_train = dv.fit_transform(train_dicts)
-
-    val_dicts = df_val[categorical + numerical].to_dict(orient="records")
-    X_val = dv.transform(val_dicts)
-
-    target = "duration"
-    y_train = df_train[target].values
-    y_val = df_val[target].values
-
-    return X_train, X_val, y_train, y_val, dv
-
-
-def find_optimal_model(X_train, X_val, y_train, y_val):
-    models_folder = Path("models")
-    models_folder.mkdir(exist_ok=True)
-
-    with mlflow.start_run():
-        train = xgb.DMatrix(X_train, label=y_train)
-        valid = xgb.DMatrix(X_val, label=y_val)
-
-        best_params = {
-            "learning_rate": 0.09585355369315604,
-            "max_depth": 30,
-            "min_child_weight": 1.060597050922164,
-            "objective": "reg:linear",
-            "reg_alpha": 0.018060244040060163,
-            "reg_lambda": 0.011658731377413597,
-            "seed": 42,
-        }
-
-        mlflow.log_params(best_params)
-
-        booster = xgb.train(
-            params=best_params,
-            dtrain=train,
-            num_boost_round=30,
-            evals=[(valid, "validation")],
-            early_stopping_rounds=50,
-        )
-
-        y_pred = booster.predict(valid)
-        rmse = root_mean_squared_error(y_val, y_pred)
-        mlflow.log_metric("rmse", rmse)
-
-        with open("models/preprocessor.b", "wb") as f_out:
-            pickle.dump(dv, f_out)
-        mlflow.log_artifact("models/preprocessor.b", artifact_path="preprocessor")
-
-        mlflow.xgboost.log_model(booster, artifact_path="models_mlflow")
-
-    return params
-
-
-def train_model(X, Y, params):
-    return model
+    if fit_dv:
+        dv = DictVectorizer()
+        X = dv.fit_transform(dicts)
+    else:
+        X = dv.transform(dicts)
+    return X, dv
 
 
 def main():
-    df_train = download_data(2021, 1)
-    df_train = transform_data(df_train)
-    print(f"Downloaded training data: {df_train.shape}")
+    mlflow.set_tracking_uri("http://localhost:5000")
+    mlflow.set_experiment("yellow-taxi-2023-03")
 
-    df_val = download_data(2021, 2)
-    df_val = transform_data(df_val)
-    print(f"Downloaded validation data: {df_val.shape}")
+    print("[Step 1] Loading raw data...")
+    df_raw = read_raw_dataframe(yellow_taxi_url)
+    print(f"[Answer Q3] Raw data records count (未篩選): {len(df_raw)}")
 
-    # df_train = prepare_data(df_train)
-    X_train, X_val, y_train, y_val, _ = fearure_engineering(df_train, df_val)
-    # params = find_optimal_model(X, Y)
-    # model = train_model(X, Y, params)
+    print("[Step 2] Loading filtered data...")
+    df = read_dataframe_filtered(yellow_taxi_url)
+    print(f"[Answer Q4] Filtered data records count (duration 1~60 min): {len(df)}")
+
+    # 拆分訓練/驗證資料
+    train_size = int(len(df) * 0.8)
+    df_train = df.iloc[:train_size].copy()
+    df_val = df.iloc[train_size:].copy()
+
+    print("[Step 3] Preparing features...")
+    X_train, dv = prepare_features(df_train, fit_dv=True)
+    X_val, _ = prepare_features(df_val, dv=dv, fit_dv=False)
+
+    y_train = df_train["duration"].values
+    y_val = df_val["duration"].values
+
+    print("[Step 4] Training Linear Regression model...")
+    with mlflow.start_run():
+        lr = LinearRegression()
+        lr.fit(X_train, y_train)
+
+        y_pred = lr.predict(X_val)
+
+        rmse = np.sqrt(np.mean((y_val - y_pred) ** 2))
+
+        mlflow.log_metric("rmse", rmse)
+        mlflow.log_params({"model": "LinearRegression"})
+
+        os.makedirs("models", exist_ok=True)
+        with open("models/dv.pkl", "wb") as f_out:
+            pickle.dump(dv, f_out)
+        mlflow.log_artifact("models/dv.pkl", artifact_path="preprocessor")
+
+        with open("models/model.pkl", "wb") as f_out:
+            pickle.dump(lr, f_out)
+        mlflow.log_artifact("models/model.pkl", artifact_path="model")
+
+        print(f"[Answer Q5] Model intercept: {lr.intercept_:.2f}")
+
+        model_size = os.path.getsize("models/model.pkl")
+        print(f"[Answer Q6] Model size in bytes: {model_size}")
+
+    print("[Done]")
 
 
 if __name__ == "__main__":
-    mlflow.set_tracking_uri("http://localhost:5000")
-    mlflow.set_experiment("nyc-taxi-experiment")
-
     main()
