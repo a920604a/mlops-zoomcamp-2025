@@ -1,10 +1,10 @@
 FROM apache/airflow:2.10.0-python3.10
-ENV AIRFLOW_HOME=/opt/airflow
 
+ENV AIRFLOW_HOME=/opt/airflow
 WORKDIR $AIRFLOW_HOME
 
 USER root
-RUN apt-get update -qq && apt-get install vim -qqq && apt install wget -qq
+RUN apt-get update -qq && apt-get install vim wget -qqq
 
 # 安裝 OpenJDK 11
 ENV JAVA_HOME=/home/jdk-11.0.2
@@ -18,14 +18,16 @@ RUN DOWNLOAD_URL="https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_l
     && rm -rf "${TMP_DIR}" \
     && java --version
 
-
 RUN mkdir -p /opt/spark/jars && chmod -R 777 /opt/spark/jars
 
 RUN wget https://github.com/GoogleCloudDataproc/spark-bigquery-connector/releases/download/0.34.1/spark-3.4-bigquery-0.34.1.jar -O /opt/spark/jars/spark-bigquery-latest.jar
 
 COPY requirements.txt .
+
 RUN python3 -m pip install --upgrade pip
+# ✅ 強制指定 pendulum 2.x 相容版本
+RUN python3 -m pip install "pendulum==2.1.2"
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
-
+# 回復 airflow user 權限
 USER $AIRFLOW_UID
