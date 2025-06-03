@@ -1,0 +1,17 @@
+# up.ps1
+docker-compose up --build --remove-orphans -d
+
+# stop.ps1
+docker-compose stop
+
+# down.ps1
+docker-compose down --remove-orphans
+
+# clean.ps1
+Remove-Item -Recurse -Force .\postgres-db-volume\
+
+# restart.ps1
+docker-compose restart
+
+docker-compose run --rm airflow-init airflow db init
+# init.ps1

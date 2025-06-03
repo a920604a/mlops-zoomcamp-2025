@@ -22,3 +22,6 @@ models/
 output/
 artifacts/
 mlruns/
+
+postgres-db-volume
+logs

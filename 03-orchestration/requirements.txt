@@ -1,0 +1,8 @@
+apache-airflow==2.7.1
+pandas==2.0.3
+scikit-learn==1.3.0
+mlflow==2.22.0
+numpy==1.26.4
+pyarrow==12.0.1        # parquet 讀取依賴
+scipy==1.11.1          # sklearn 依賴
+cloudpickle==2.2.1     # airflow 依賴
