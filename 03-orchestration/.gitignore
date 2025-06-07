@@ -19,9 +19,8 @@ models/
 
 # End of https://www.toptal.com/developers/gitignore/api/jupyternotebooks
 
-output/
-artifacts/
-mlruns/
+mlflow_artifacts/
+mlflow_pg_data
+postgres_data
 
-postgres-db-volume
 logs
