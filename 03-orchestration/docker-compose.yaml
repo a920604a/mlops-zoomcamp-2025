@@ -55,14 +55,35 @@ services:
     command: airflow scheduler
 
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.0.1
+    build:
+      context: .
+      dockerfile: Dockerfile.mlflow
     container_name: mlflow
     restart: always
     ports:
-      - "5001:5000" # 對外開放 5001，容器內用 5000
+      - "5001:5000"
+    depends_on:
+      - mlflow_db
     volumes:
-      - ${PWD}/mlflow:/mlflow
-      - ${PWD}/mlflow_db:/mlflow_db
-    user: "${UID}:${GID}"
+      - ./mlflow_artifacts:/mlflow_artifacts
+    user: "1000:1000" # ✅ 使用與主機相同 UID/GID（確保資料夾可寫）
     command: >
-      mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri=sqlite:///mlflow_db/mlflow.db --default-artifact-root=/tmp/mlflow
+      mlflow server 
+        --host 0.0.0.0 
+        --port 5000 
+        --backend-store-uri postgresql://mlflow:mlflow@mlflow_db:5432/mlflow 
+        --default-artifact-root /tmp/mlflow
+
+  mlflow_db:
+    image: postgres:15
+    container_name: mlflow_db
+    restart: always
+    environment:
+      POSTGRES_USER: mlflow
+      POSTGRES_PASSWORD: mlflow
+      POSTGRES_DB: mlflow
+    volumes:
+      - ./mlflow_pg_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432" # 避免跟 airflow 的 postgres:5432 衝突
+

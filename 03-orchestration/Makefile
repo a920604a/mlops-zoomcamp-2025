@@ -12,7 +12,7 @@ down:
 	docker compose down --volumes --remove-orphans
 
 clean:
-	sudo rm -rf postgres_data/ mlflow/ mlflow_db/
+	sudo rm -rf postgres_data/ mlflow/ mlflow_db/ mlflow_pg_data/
 
 restart:
 	docker compose restart
