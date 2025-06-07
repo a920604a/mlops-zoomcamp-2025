@@ -23,7 +23,7 @@ def ensure_data_dir():
     os.makedirs(DATA_DIR, exist_ok=True)
 
 with DAG(
-    dag_id="yellow_taxi_pipeline_v2",
+    dag_id="yellow_taxi_pipeline",
     schedule_interval=None,
     default_args=default_args,
     catchup=False,

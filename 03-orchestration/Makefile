@@ -1,9 +1,4 @@
 PLATFORM ?= linux/amd64
-
-UID := $(shell id -u)
-GID := $(shell id -g)
-
-
 ## Stops all services in docker-compose
 stop:
 	docker compose stop
@@ -18,6 +13,4 @@ restart:
 	docker compose restart
 
 up:
-	mkdir -p mlflow_artifacts/ 
-	chmod -R 777 mlflow_artifacts
-	UID=$(UID) GID=$(GID) docker compose up -d
+	docker compose up -d
