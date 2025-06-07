@@ -1,0 +1,10 @@
+FROM python:3.10-slim
+
+WORKDIR /mlflow
+RUN pip install mlflow
+
+# 加入 entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
