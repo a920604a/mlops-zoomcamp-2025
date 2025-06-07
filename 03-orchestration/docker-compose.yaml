@@ -12,6 +12,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__WEBSERVER__SECRET_KEY: "supersecretkey1234567890" # <- 新增這行
   volumes:
     - ./airflow/dags:/opt/airflow/dags
+    - ./mlflow_artifacts:/tmp/mlflow_artifacts # ✅ 加這行
   restart: always
   user: "${AIRFLOW_UID:-50000}:0"
 
@@ -65,14 +66,16 @@ services:
     depends_on:
       - mlflow_db
     volumes:
-      - ./mlflow_artifacts:/mlflow_artifacts
-    user: "1000:1000" # ✅ 使用與主機相同 UID/GID（確保資料夾可寫）
+      - ./mlflow_artifacts:/tmp/mlflow_artifacts
+    user: "${UID:-1000}:${GID:-1000}" # 使用環境變數指定使用者，確保與宿主機一致
+    environment:
+      MLFLOW_ARTIFACT_ROOT: file:///tmp/mlflow_artifacts
     command: >
       mlflow server 
         --host 0.0.0.0 
         --port 5000 
         --backend-store-uri postgresql://mlflow:mlflow@mlflow_db:5432/mlflow 
-        --default-artifact-root /tmp/mlflow
+        --default-artifact-root file:///tmp/mlflow_artifacts
 
   mlflow_db:
     image: postgres:15

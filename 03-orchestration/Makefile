@@ -12,12 +12,12 @@ down:
 	docker compose down --volumes --remove-orphans
 
 clean:
-	sudo rm -rf postgres_data/ mlflow/ mlflow_db/ mlflow_pg_data/
+	sudo rm -rf postgres_data/ mlflow_pg_data/ mlflow_artifacts/
 
 restart:
 	docker compose restart
 
 up:
-	mkdir -p mlflow mlflow_db
-	chmod -R 777 mlflow mlflow_db
+	mkdir -p mlflow_artifacts/ 
+	chmod -R 777 mlflow_artifacts
 	UID=$(UID) GID=$(GID) docker compose up -d
