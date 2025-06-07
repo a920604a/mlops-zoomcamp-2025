@@ -109,7 +109,7 @@ def train_and_evaluate(df_train, df_val, tracking_uri="http://localhost:5000", l
             mlflow.set_tag("model_type", "LinearRegression")
             mlflow.set_tag("env", "production")
 
-            model_dir = "/tmp/mlflow_artifacts"
+            model_dir = "/mlflow_artifacts"
             os.makedirs(model_dir, exist_ok=True)
 
             dv_path = os.path.join(model_dir, "dv.pkl")
