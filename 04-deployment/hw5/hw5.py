@@ -37,7 +37,7 @@ def fetch_predict_data(model, dv, year=2023, month=3):
     X_val = dv.transform(dicts)
     y_pred = model.predict(X_val)
     # What's the mean predicted duration?
-    print(f"predicted mean duration: {y_pred.mean()}")
+    print(f"predicted mean duration: {y_pred.mean()}")  # 0.1917
 
 
 if __name__ == "__main__":
