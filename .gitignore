@@ -175,7 +175,7 @@ cython_debug/
 .qodo
 
 molps-zoomcamp
-config/
+# config/
 postgres_data
 mlflow_pg_data
 mlops-zoomcamp
