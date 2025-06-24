@@ -111,7 +111,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": false,
-          "rawSql": "SELECT\n  \"timestamp\" AS \"time\",\n  prediction_drift\nFROM dummy_metrics\nWHERE\n  $__timeFilter(\"timestamp\")\nORDER BY 1",
+          "rawSql": "SELECT\n  \"timestamp\" AS \"time\",\n  prediction_drift\nFROM homework\nWHERE\n  $__timeFilter(\"timestamp\")\nORDER BY 1",
           "refId": "A",
           "select": [
             [
@@ -123,7 +123,7 @@
               }
             ]
           ],
-          "table": "dummy_metrics",
+          "table": "homework",
           "timeColumn": "\"timestamp\"",
           "timeColumnType": "timestamp",
           "where": [
@@ -237,7 +237,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": false,
-          "rawSql": "SELECT\n  \"timestamp\" AS \"time\",\n  share_missing_values\nFROM dummy_metrics\nWHERE\n  $__timeFilter(\"timestamp\")\nORDER BY 1",
+          "rawSql": "SELECT\n  \"timestamp\" AS \"time\",\n  share_missing_values\nFROM homework\nWHERE\n  $__timeFilter(\"timestamp\")\nORDER BY 1",
           "refId": "A",
           "select": [
             [
@@ -249,7 +249,7 @@
               }
             ]
           ],
-          "table": "dummy_metrics",
+          "table": "homework",
           "timeColumn": "\"timestamp\"",
           "timeColumnType": "timestamp",
           "where": [
@@ -363,7 +363,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": false,
-          "rawSql": "SELECT\n  \"timestamp\" AS \"time\",\n  num_drifted_columns\nFROM dummy_metrics\nWHERE\n  $__timeFilter(\"timestamp\")\nORDER BY 1",
+          "rawSql": "SELECT\n  \"timestamp\" AS \"time\",\n  num_drifted_columns\nFROM homework\nWHERE\n  $__timeFilter(\"timestamp\")\nORDER BY 1",
           "refId": "A",
           "select": [
             [
@@ -375,7 +375,7 @@
               }
             ]
           ],
-          "table": "dummy_metrics",
+          "table": "homework",
           "timeColumn": "\"timestamp\"",
           "timeColumnType": "timestamp",
           "where": [

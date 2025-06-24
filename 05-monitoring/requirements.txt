@@ -1,13 +1,24 @@
-prefect
+# 資料處理與建模
+pandas>=1.5.3
+numpy>=1.23.0
+scikit-learn>=1.2.0
+joblib
+matplotlib
+
+# parquet 支援（用 fastparquet 避開 pyarrow 問題）
+fastparquet
+
+# PostgreSQL client (v3)，使用 binary wheel 安裝以避免 C 編譯
+psycopg[binary]>=3.1.8
+
+# MLOps 套件與任務流程
+prefect>=2.14.0
 tqdm
 requests
-joblib
-pyarrow
-psycopg
-psycopg_binary
+
+# Evidently - 建議使用 Zoomcamp 相容版本
 evidently==0.6.7
-pandas
-numpy
-scikit-learn
+
+
+# Jupyter notebook 開發
 jupyter
-matplotlib

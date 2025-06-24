@@ -16,7 +16,7 @@ from evidently import ColumnMapping
 from evidently.metrics import (
     ColumnDriftMetric,
     DatasetDriftMetric,
-    DatasetMissingValuesMetric,
+    DatasetMissingValuesMetric
 )
 
 logging.basicConfig(
